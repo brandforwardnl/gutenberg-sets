@@ -28,6 +28,50 @@
 			} );
 		}, [] );
 
+		useEffect( () => {
+			const updatePreviews = () => {
+				const previews = document.querySelectorAll( '.gdb-set-card__preview' );
+				previews.forEach( ( preview ) => {
+					const content = preview.querySelector( '.block-editor-block-preview__content' );
+					if ( ! content ) {
+						return;
+					}
+
+					const containerWidth = preview.clientWidth;
+					const containerHeight = preview.clientHeight;
+					const contentWidth = content.scrollWidth || content.offsetWidth || containerWidth;
+					const contentHeight = content.scrollHeight || content.offsetHeight || containerHeight;
+					if ( ! containerWidth || ! containerHeight ) {
+						return;
+					}
+
+					let scale = containerWidth / contentWidth;
+					scale = Math.max( 0.15, Math.min( 1, scale ) );
+
+					const scrollDistance = Math.max( 0, contentHeight * scale - containerHeight );
+					preview.style.setProperty( '--gdb-preview-scale', scale.toString() );
+					preview.style.setProperty( '--gdb-preview-scroll', `${ scrollDistance }px` );
+					preview.classList.add( 'is-ready' );
+					if ( scrollDistance > 1 ) {
+						preview.classList.add( 'is-scrollable' );
+					} else {
+						preview.classList.remove( 'is-scrollable' );
+					}
+				} );
+			};
+
+			const raf = requestAnimationFrame( updatePreviews );
+			const timeout = setTimeout( updatePreviews, 300 );
+			const interval = setInterval( updatePreviews, 1000 );
+			window.addEventListener( 'resize', updatePreviews );
+			return () => {
+				cancelAnimationFrame( raf );
+				clearTimeout( timeout );
+				clearInterval( interval );
+				window.removeEventListener( 'resize', updatePreviews );
+			};
+		}, [ sets ] );
+
 		const insertSet = ( set ) => {
 			if ( ! set ) {
 				return;
